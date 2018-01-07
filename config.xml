@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEMPERATURE-MONITOR>
+<HARDWARE>
+  <CLOCK>
+    <PIN>11</PIN>
+  </CLOCK>
+  <DATA>
+    <PIN>7</PIN>
+  </DATA>
+</HARDWARE>
+<SENSORS>
+  <CHANNEL>
+    <NAME>Propogator</NAME>
+    <CSPIN>3</CSPIN>
+    <RELAY>37</RELAY>
+  </CHANNEL>
+</SENSORS>
+<DISPLAY>
+  <TITLE>Propogator Thermostat</TITLE>
+  <UNITS>C</UNITS>
+</DISPLAY>
+<LOGGING>
+  <INTERVAL>10</INTERVAL>
+</LOGGING>
+</TEMPERATURE-MONITOR>
