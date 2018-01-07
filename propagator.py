@@ -1,7 +1,7 @@
-"""Propogator Thermostat
+"""Propagator Thermostat
 Reads the configuration from an associated xml file.
 Presents a set of webpages to display the temperature.
-Controls the temperature of the propogator using a sensor (typically inserted into the soil).
+Controls the temperature of the propagator using a sensor (typically inserted into the soil).
 """
 
 from flask import Flask, render_template, request
