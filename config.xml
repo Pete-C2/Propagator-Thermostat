@@ -10,13 +10,13 @@
 </HARDWARE>
 <SENSORS>
   <CHANNEL>
-    <NAME>Propogator</NAME>
+    <NAME>Propagator</NAME>
     <CSPIN>3</CSPIN>
     <RELAY>37</RELAY>
   </CHANNEL>
 </SENSORS>
 <DISPLAY>
-  <TITLE>Propogator Thermostat</TITLE>
+  <TITLE>Propagator Thermostat</TITLE>
   <UNITS>C</UNITS>
 </DISPLAY>
 <LOGGING>
