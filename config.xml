@@ -2,17 +2,17 @@
 <TEMPERATURE-MONITOR>
 <HARDWARE>
   <CLOCK>
-    <PIN>11</PIN>
+    <PIN>13</PIN>
   </CLOCK>
   <DATA>
-    <PIN>7</PIN>
+    <PIN>11</PIN>
   </DATA>
 </HARDWARE>
 <SENSORS>
   <CHANNEL>
     <NAME>Propagator</NAME>
-    <CSPIN>3</CSPIN>
-    <RELAY>37</RELAY>
+    <CSPIN>12</CSPIN>
+    <RELAY>40</RELAY>
   </CHANNEL>
 </SENSORS>
 <DISPLAY>
