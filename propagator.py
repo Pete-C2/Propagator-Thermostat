@@ -14,6 +14,58 @@ import csv
 import RPi.GPIO as GPIO
 from max31855 import MAX31855, MAX31855Error
 
+
+# Heater control code: if the temperature is too cold then turn the heater on (typically using a relay), else turn it off.
+
+class HeaterThread ( threading.Thread ):
+
+     def run ( self ):
+          global control_interval
+          global cs_pins
+          global clock_pin
+          global data_pin
+          global units
+
+          GPIO.setmode(GPIO.BOARD)
+          print "Starting heater thread"
+
+          for relay_pin in relay_pins:
+               GPIO.setup(relay_pin, GPIO.OUT)
+               GPIO.output(relay_pin, GPIO.LOW)
+
+          try:
+               while 1: # Control the heater forever while powered
+                    thermocouples = []
+                    print "Measuring..."
+                    for cs_pin in cs_pins:
+                         thermocouples.append(MAX31855(cs_pin, clock_pin, data_pin, units, GPIO.BOARD))
+
+                    for thermocouple, relay_pin in zip(thermocouples, relay_pins):
+                         try:
+                              tc = int(thermocouple.get())
+                         except MAX31855Error as e:
+                              tc = "Error"
+
+                         print "Temperature: " + str(tc)
+
+                         if tc == "Error":
+                              GPIO.output(relay_pin, GPIO.LOW) # Turn off Relay (fault condition - avoid overheating)
+                              print "Error: Relay off"
+                         else:
+                              if tc < set_temperature:
+                                   GPIO.output(relay_pin, GPIO.HIGH) # Turn on relay
+                                   print "Relay on"
+                              else:
+                                   GPIO.output(relay_pin, GPIO.LOW) # Turn off relay
+                                   print "Relay off"
+            
+                    for thermocouple in thermocouples:
+                         thermocouple.cleanup()
+                    time.sleep(control_interval)
+
+          except KeyboardInterrupt:
+               GPIO.cleanup()
+
 app = Flask(__name__)
 
 # Initialisation
@@ -66,7 +118,7 @@ log_status = "Off"  # Values: Off -> On -> Stop -> Off
 
 # Control
 control_interval = 10 # seconds. Interval between control measurements
-set_temperature = 20 
+set_temperature = 27 
 
 HeaterThread().start()
 
@@ -216,42 +268,7 @@ class LogThread ( threading.Thread ):
                time.sleep(log_interval)
           log_status = "Off"
 
-# Heater control code: if the temperature is too cold then turn the heater on (typically using a relay), else turn it off.
 
-class HeaterThread ( threading.Thread ):
-
-     def run ( self ):
-          global control_interval
-          global cs_pins
-          global clock_pin
-          global data_pin
-          global units
-
-          GPIO.setmode(GPIO.BOARD)
-
-          for relay_pin in relay_pins:
-               GPIO.setup(relay_pin, GPIO.OUT)
-               GPIO.output(relay_pin, GPIO.LOW)
-          
-          while 1: # Control the heater forever while powered
-               thermocouples = []
-               for cs_pin in cs_pins:
-                    thermocouples.append(MAX31855(cs_pin, clock_pin, data_pin, units, GPIO.BOARD))
-
-               for thermocouple, relay_pin in zip(thermocouples, relay_pins):
-                    try:
-                         tc = int(thermocouple.get())
-                         if tc < set_temperature:
-                              GPIO.output(relay_pin, GPIO.HIGH) # Turn on relay
-                         else
-                              GPIO.output(relay_pin, GPIO.LOW) # Turn off relay
-                    except MAX31855Error as e:
-                         tc = ""
-                         GPIO.output(relay_pin, GPIO.LOW) # Turn off Relay (fault condition - avoid overheating)
-  
-               for thermocouple in thermocouples:
-                    thermocouple.cleanup()
-               time.sleep(control_interval)
 
 if __name__ == '__main__':
      app.run(debug=True, host='0.0.0.0')

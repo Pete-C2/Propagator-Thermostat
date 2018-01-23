@@ -28,6 +28,9 @@ See wiki.
 
 ## Changelog
 
+### V0.2
+Corrected code to run threading
+Updated config to match my hardware build
 
 ### V0.1
 Initial trial code.
