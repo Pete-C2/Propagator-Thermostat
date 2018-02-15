@@ -14,7 +14,6 @@ import csv
 import RPi.GPIO as GPIO
 from max31855 import MAX31855, MAX31855Error
 
-
 # Heater control code: if the temperature is too cold then turn the heater on (typically using a relay), else turn it off.
 
 class HeaterThread ( threading.Thread ):
@@ -118,7 +117,10 @@ log_status = "Off"  # Values: Off -> On -> Stop -> Off
 
 # Control
 control_interval = 10 # seconds. Interval between control measurements
-set_temperature = 27 
+
+file = open(dir+"/SetTemp.txt", "r")
+set_temperature = int(file.read())
+file.close()
 
 HeaterThread().start()
 
