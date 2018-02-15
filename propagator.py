@@ -147,7 +147,7 @@ def index():
 @app.route("/", methods=['POST'])   # Seems to be run regardless of which page the post comes from
 def log_button():
      global log_status
-     global pending_note
+     global set_temperature
      if request.method == 'POST':
           # Get the value from the submitted form  
           submitted_value = request.form['logging']
@@ -159,6 +159,11 @@ def log_button():
           if submitted_value =="Log_Stop":   
                if (log_status == "On"):
                     log_status = "Stop"
+          if submitted_value =="Set_Temp":
+               set_temperature =  request.form['temp']
+               file = open(dir+"/SetTemp.txt", "w")
+               file.write(set_temperature)
+               file.close()
      return index()
  
 @app.route('/temp')
@@ -190,6 +195,7 @@ def temp():
                 'title' : title,
                 'time': timeString,
                 'air' : air_temp,
+                'set' : set_temperature,
                 'temps' : temps,
                 'units' : units.upper()
                 }
