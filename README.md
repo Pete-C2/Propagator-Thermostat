@@ -28,8 +28,15 @@ See wiki.
 
 ## Changelog
 
+### V0.4
+Added ability to set temperature and right back to file (so that after restart the set temperature is unchanged)
+
+### V0.3
+Added read of temperature from text file
+
 ### V0.2
 Corrected code to run threading
+
 Updated config to match my hardware build
 
 ### V0.1
