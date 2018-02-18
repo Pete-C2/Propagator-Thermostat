@@ -28,6 +28,9 @@ See wiki.
 
 ## Changelog
 
+### V1.0
+Added store and display of heater state
+
 ### V0.4
 Added ability to set temperature and right back to file (so that after restart the set temperature is unchanged)
 

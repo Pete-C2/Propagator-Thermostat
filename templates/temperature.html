@@ -17,6 +17,18 @@
     <P>Current time is: {{ time }}</P>
     
     <P>Air Temperature: {{ air }}&deg;{{ units }} (approx)</P>
+
+    <P>Heater Set Temperature: {{ set }}&deg;{{ units }}</P>
+
+    <P>Heater State: {{ heater }}</P>
+
+    <FORM METHOD="post" ACTION="/">
+    
+    <P><INPUT TYPE="NUMBER" NAME="temp" MIN="0" MAX="30"></P>
+    <BUTTON NAME="logging" VALUE="Set_Temp" STYLE="width:35%" CLASS="buttong">Set Temperature</BUTTON>
+
+
+</FORM>
     
     <H2>Sensor Temperatures</H2>
     
