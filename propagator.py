@@ -24,6 +24,7 @@ class HeaterThread ( threading.Thread ):
           global clock_pin
           global data_pin
           global units
+          global heater_state
 
           GPIO.setmode(GPIO.BOARD)
           print "Starting heater thread"
@@ -49,13 +50,16 @@ class HeaterThread ( threading.Thread ):
 
                          if tc == "Error":
                               GPIO.output(relay_pin, GPIO.LOW) # Turn off Relay (fault condition - avoid overheating)
+                              heater_state = "Error: Off"
                               print "Error: Relay off"
                          else:
                               if tc < set_temperature:
                                    GPIO.output(relay_pin, GPIO.HIGH) # Turn on relay
+                                   heater_state = "On"
                                    print "Relay on"
                               else:
                                    GPIO.output(relay_pin, GPIO.LOW) # Turn off relay
+                                   heater_state = "Off"
                                    print "Relay off"
             
                     for thermocouple in thermocouples:
@@ -68,6 +72,8 @@ class HeaterThread ( threading.Thread ):
 app = Flask(__name__)
 
 # Initialisation
+
+heater_state = "Off"
 
 # Read config from xml file
 
@@ -197,6 +203,7 @@ def temp():
                 'air' : air_temp,
                 'set' : set_temperature,
                 'temps' : temps,
+                'heater' : heater_state,
                 'units' : units.upper()
                 }
 
