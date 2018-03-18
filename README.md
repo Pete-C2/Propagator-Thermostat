@@ -28,8 +28,12 @@ See wiki.
 
 ## Changelog
 
+### V1.2
+Added proportion of time heater is on and air temperature to log
+
 ### V1.1
 Modified display to use the last value measured for heater control
+
 Added calibration for main sensor
 
 ### V1.0
