@@ -27,7 +27,9 @@ class HeaterThread ( threading.Thread ):
           global heater_state
           global temps
           global air_temp
-
+          global log_on
+          global log_off
+          
           GPIO.setmode(GPIO.BOARD)
           print "Starting heater thread"
 
@@ -67,11 +69,15 @@ class HeaterThread ( threading.Thread ):
                               if tc < set_temperature:
                                    GPIO.output(relay_pin, GPIO.HIGH) # Turn on relay
                                    heater_state = "On"
-                                   print "Relay on"
+                                   if (log_status == "On"):
+                                        log_on = log_on + 1
+                                   print "Relay on " + str(log_on)
                               else:
                                    GPIO.output(relay_pin, GPIO.LOW) # Turn off relay
                                    heater_state = "Off"
-                                   print "Relay off"
+                                   if (log_status == "On"):
+                                        log_off = log_off + 1
+                                   print "Relay off " + str(log_off)
             
                     for thermocouple in thermocouples:
                          thermocouple.cleanup()
@@ -135,6 +141,8 @@ for child in sensors:
 logging = root.find('LOGGING')
 log_interval = int(logging.find('INTERVAL').text)*60  # Interval in minutes from config file
 log_status = "Off"  # Values: Off -> On -> Stop -> Off
+log_on = 0 # Number of measurement intervals when heater is on
+log_off = 0 # Number of measurement intervals when heater is off
 
 # Control
 control_interval = 10 # seconds. Interval between control measurements
@@ -175,6 +183,8 @@ def log_button():
           if submitted_value == "Log_Start":
                if (log_status == "Off"):
                     log_status = "On"
+                    log_on = 0
+                    log_off = 0
                     LogThread().start()
                     
           if submitted_value =="Log_Stop":   
@@ -245,6 +255,8 @@ class LogThread ( threading.Thread ):
           global clock_pin
           global data_pin
           global units
+          global log_on
+          global log_off
           
           now = datetime.datetime.now()
           filetime = now.strftime("%Y-%m-%d-%H-%M")
@@ -254,6 +266,8 @@ class LogThread ( threading.Thread ):
                row = ["Date-Time"]
                for channels in temps:
                     row.append( temps[channels]['name'])
+               row.append('Heating Active')
+               row.append('Air Temp')
                logfile.writerow(row)
 
           while log_status == "On":
@@ -264,6 +278,18 @@ class LogThread ( threading.Thread ):
 
                     for channels in temps:
                          row.append( temps[channels]['temp'])
+                    if (log_off == 0):
+                         if (log_on > 1):
+                              row.append('100%') # Heater was always on
+                         else:
+                              row.append('No measurements') # No measurement of heater on or off!
+                    else:
+                         row.append(str(int(100*log_on/(log_on+log_off)))+'%') # Calculate the percentage of time the heater was on
+                                    
+                    log_on = 0 # Restart heater proportion measurement
+                    log_off = 0
+
+                    row.append(air_temp)
  
                     logfile.writerow(row)
                time.sleep(log_interval)
