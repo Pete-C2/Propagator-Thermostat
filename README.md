@@ -28,6 +28,10 @@ See wiki.
 
 ## Changelog
 
+### V1.1
+Modified display to use the last value measured for heater control
+Added calibration for main sensor
+
 ### V1.0
 Added store and display of heater state
 

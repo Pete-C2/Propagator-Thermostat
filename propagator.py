@@ -25,6 +25,8 @@ class HeaterThread ( threading.Thread ):
           global data_pin
           global units
           global heater_state
+          global temps
+          global air_temp
 
           GPIO.setmode(GPIO.BOARD)
           print "Starting heater thread"
@@ -36,17 +38,26 @@ class HeaterThread ( threading.Thread ):
           try:
                while 1: # Control the heater forever while powered
                     thermocouples = []
-                    print "Measuring..."
+                    print ""
+                    print "Measuring...    %s" % (time.ctime(time.time()))
+                    channel = 1
+
                     for cs_pin in cs_pins:
                          thermocouples.append(MAX31855(cs_pin, clock_pin, data_pin, units, GPIO.BOARD))
 
-                    for thermocouple, relay_pin in zip(thermocouples, relay_pins):
+                    for thermocouple, relay_pin, cal, meas in zip(thermocouples, relay_pins, calibrate, measured):
+                         if (channel == 1):
+                              air_temp = int(thermocouple.get_rj())
                          try:
-                              tc = int(thermocouple.get())
+                              tc = int(thermocouple.get()) + cal - meas
+                              temps[channel]['temp'] = tc
                          except MAX31855Error as e:
                               tc = "Error"
+                              temps[channel]['temp'] = "Error: " + e.value
 
-                         print "Temperature: " + str(tc)
+                         channel = channel + 1
+
+                         print "Temperature: " + str(tc) + ".  Set Temperature: " + str(set_temperature)
 
                          if tc == "Error":
                               GPIO.output(relay_pin, GPIO.LOW) # Turn off Relay (fault condition - avoid overheating)
@@ -97,9 +108,13 @@ data_pin = int(DATA.find('PIN').text)
 # Chip Selects
 cs_pins = []
 relay_pins = []
+calibrate = []
+measured = []
 for child in sensors:
      cs_pins.append(int(child.find('CSPIN').text))
      relay_pins.append(int(child.find('RELAY').text))
+     calibrate.append(int(child.find('CALIBRATE').text))
+     measured.append(int(child.find('MEASURED').text))
 
 # Read display settings configuration
 units = display.find('UNITS').text.lower()
@@ -177,26 +192,6 @@ def temp():
      now = datetime.datetime.now()
      timeString = now.strftime("%H:%M on %d-%m-%Y")
 
-     thermocouples = []
-
-     channel = 1
-     for cs_pin in cs_pins:
-          thermocouples.append(MAX31855(cs_pin, clock_pin, data_pin, units, GPIO.BOARD))
-
-     for thermocouple in thermocouples:
-          if (channel == 1):
-               air_temp = int(thermocouple.get_rj())
-          try:
-                tc = str(int(thermocouple.get()))+u'\N{DEGREE SIGN}'+units.upper()
-          except MAX31855Error as e:
-                tc = "Error: "+ e.value
-
-          temps[channel]['temp'] = tc
-          channel = channel + 1
-
-     for thermocouple in thermocouples:
-          thermocouple.cleanup()
-       
      templateData = {
                 'title' : title,
                 'time': timeString,
@@ -266,19 +261,10 @@ class LogThread ( threading.Thread ):
                     logfile = csv.writer(csvfile, delimiter=',', quotechar='"')
                     now = datetime.datetime.now()
                     row = [now.strftime("%d/%m/%Y %H:%M")]
-                    thermocouples = []
-                    for cs_pin in cs_pins:
-                         thermocouples.append(MAX31855(cs_pin, clock_pin, data_pin, units, GPIO.BOARD))
 
-                    for thermocouple in thermocouples:
-                         try:
-                               tc = int(thermocouple.get())
-                         except MAX31855Error as e:
-                               tc = ""
-                         row.append(tc)
+                    for channels in temps:
+                         row.append( temps[channels]['temp'])
  
-                    for thermocouple in thermocouples:
-                         thermocouple.cleanup()
                     logfile.writerow(row)
                time.sleep(log_interval)
           log_status = "Off"
@@ -286,6 +272,6 @@ class LogThread ( threading.Thread ):
 
 
 if __name__ == '__main__':
-     app.run(debug=True, host='0.0.0.0')
+     app.run(debug=False, host='0.0.0.0')
      
      
