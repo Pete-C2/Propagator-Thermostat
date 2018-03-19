@@ -29,6 +29,7 @@ class HeaterThread ( threading.Thread ):
           global air_temp
           global log_on
           global log_off
+          global set_temperature
           
           GPIO.setmode(GPIO.BOARD)
           print "Starting heater thread"
@@ -42,6 +43,14 @@ class HeaterThread ( threading.Thread ):
                     thermocouples = []
                     print ""
                     print "Measuring...    %s" % (time.ctime(time.time()))
+
+                    now = datetime.datetime.now().time()
+                    
+                    set_temperature = temperature_schedule[1]['temp'] # Default to the first timed temperature
+                    for count in temperature_schedule:
+                          if (now >= temperature_schedule[count]['time']):
+                              set_temperature = temperature_schedule[count]['temp'] # Keep selecting a new temperature if the time is later than the start of the time schedule
+                   
                     channel = 1
 
                     for cs_pin in cs_pins:
@@ -71,13 +80,13 @@ class HeaterThread ( threading.Thread ):
                                    heater_state = "On"
                                    if (log_status == "On"):
                                         log_on = log_on + 1
-                                   print "Relay on " + str(log_on)
+                                   print "Relay on"
                               else:
                                    GPIO.output(relay_pin, GPIO.LOW) # Turn off relay
                                    heater_state = "Off"
                                    if (log_status == "On"):
                                         log_off = log_off + 1
-                                   print "Relay off " + str(log_off)
+                                   print "Relay off"
             
                     for thermocouple in thermocouples:
                          thermocouple.cleanup()
@@ -103,6 +112,7 @@ HW = root.find('HARDWARE')
 sensors = root.find('SENSORS')
 display = root.find('DISPLAY')
 logging = root.find('LOGGING')
+schedule = root.find('TEMPERATURES')
 
 # Read hardware configuration
 # Clock
@@ -137,6 +147,15 @@ for child in sensors:
      temps[channel] = {'name' : child.find('NAME').text, 'temp' : ''}
      channel = channel + 1
 
+# Read temperature/time schedules
+temperature_schedule = {}
+count = 1
+for child in schedule:
+     temp = datetime.datetime.strptime(child.find('TIME').text, "%H:%M")
+     schedule_time = temp.time()
+     temperature_schedule[count] = {'time' : schedule_time, 'temp' : int(child.find('TEMPERATURE').text)}
+     count = count + 1
+
 # Read logging
 logging = root.find('LOGGING')
 log_interval = int(logging.find('INTERVAL').text)*60  # Interval in minutes from config file
@@ -147,9 +166,7 @@ log_off = 0 # Number of measurement intervals when heater is off
 # Control
 control_interval = 10 # seconds. Interval between control measurements
 
-file = open(dir+"/SetTemp.txt", "r")
-set_temperature = int(file.read())
-file.close()
+set_temperature = 0 # Default value pending reading of correct value
 
 HeaterThread().start()
 
@@ -190,11 +207,7 @@ def log_button():
           if submitted_value =="Log_Stop":   
                if (log_status == "On"):
                     log_status = "Stop"
-          if submitted_value =="Set_Temp":
-               set_temperature =  request.form['temp']
-               file = open(dir+"/SetTemp.txt", "w")
-               file.write(set_temperature)
-               file.close()
+
      return index()
  
 @app.route('/temp')
@@ -257,6 +270,7 @@ class LogThread ( threading.Thread ):
           global units
           global log_on
           global log_off
+          global set_temperature
           
           now = datetime.datetime.now()
           filetime = now.strftime("%Y-%m-%d-%H-%M")
@@ -264,9 +278,10 @@ class LogThread ( threading.Thread ):
           with open(filename, 'ab') as csvfile:
                logfile = csv.writer(csvfile, delimiter=',', quotechar='"')
                row = ["Date-Time"]
+               row.append('Set Temp')
                for channels in temps:
                     row.append( temps[channels]['name'])
-               row.append('Heating Active')
+               row.append('Heating Active (%)')
                row.append('Air Temp')
                logfile.writerow(row)
 
@@ -275,7 +290,7 @@ class LogThread ( threading.Thread ):
                     logfile = csv.writer(csvfile, delimiter=',', quotechar='"')
                     now = datetime.datetime.now()
                     row = [now.strftime("%d/%m/%Y %H:%M")]
-
+                    row.append(set_temperature)
                     for channels in temps:
                          row.append( temps[channels]['temp'])
                     if (log_off == 0):
@@ -284,7 +299,7 @@ class LogThread ( threading.Thread ):
                          else:
                               row.append('No measurements') # No measurement of heater on or off!
                     else:
-                         row.append(str(int(100*log_on/(log_on+log_off)))+'%') # Calculate the percentage of time the heater was on
+                         row.append(int(100*log_on/(log_on+log_off))) # Calculate the percentage of time the heater was on
                                     
                     log_on = 0 # Restart heater proportion measurement
                     log_off = 0
