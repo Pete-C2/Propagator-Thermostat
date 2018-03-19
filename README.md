@@ -28,6 +28,11 @@ See wiki.
 
 ## Changelog
 
+### V1.3
+Added timed temperature schedule, e.g. to allow different day/night temperature profile
+
+Removed ability to set the temperature from the web page
+
 ### V1.2
 Added proportion of time heater is on and air temperature to log
 

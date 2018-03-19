@@ -22,20 +22,13 @@
 
     <P>Heater State: {{ heater }}</P>
 
-    <FORM METHOD="post" ACTION="/">
-    
-    <P><INPUT TYPE="NUMBER" NAME="temp" MIN="0" MAX="30"></P>
-    <BUTTON NAME="logging" VALUE="Set_Temp" STYLE="width:35%" CLASS="buttong">Set Temperature</BUTTON>
-
-
-</FORM>
     
     <H2>Sensor Temperatures</H2>
     
     <P>{% for temp in temps %} </P>
-    <TABLE WIDTH="90%" CLASS="temptable">
+    <TABLE CLASS="temptable">
       <TR>
-        <TD WIDTH="75%">
+        <TD>
         
         <P>{{ temps[temp].name }}</P></TD>
         <TD>
