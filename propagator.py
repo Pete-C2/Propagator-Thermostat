@@ -30,6 +30,8 @@ class HeaterThread ( threading.Thread ):
           global log_on
           global log_off
           global set_temperature
+          global min_temperature
+          global max_temperature
           
           GPIO.setmode(GPIO.BOARD)
           print "Starting heater thread"
@@ -62,6 +64,10 @@ class HeaterThread ( threading.Thread ):
                          try:
                               tc = int(thermocouple.get()) + cal - meas
                               temps[channel]['temp'] = tc
+                              if (tc < min_temperature):
+                                  min_temperature = tc
+                              if (tc > max_temperature):
+                                   max_temperature = tc
                          except MAX31855Error as e:
                               tc = "Error"
                               temps[channel]['temp'] = "Error: " + e.value
@@ -69,6 +75,8 @@ class HeaterThread ( threading.Thread ):
                          channel = channel + 1
 
                          print "Temperature: " + str(tc) + ".  Set Temperature: " + str(set_temperature)
+                         print "Min: " + str(min_temperature) + ", Max: " + str(max_temperature)
+                         
 
                          if tc == "Error":
                               GPIO.output(relay_pin, GPIO.LOW) # Turn off Relay (fault condition - avoid overheating)
@@ -167,6 +175,8 @@ log_off = 0 # Number of measurement intervals when heater is off
 control_interval = 10 # seconds. Interval between control measurements
 
 set_temperature = 0 # Default value pending reading of correct value
+min_temperature = 0 # Default value pending reading of correct value
+max_temperature = 0 # Default value pending reading of correct value
 
 HeaterThread().start()
 
@@ -271,6 +281,8 @@ class LogThread ( threading.Thread ):
           global log_on
           global log_off
           global set_temperature
+          global min_temperature
+          global max_temperature
           
           now = datetime.datetime.now()
           filetime = now.strftime("%Y-%m-%d-%H-%M")
@@ -283,6 +295,8 @@ class LogThread ( threading.Thread ):
                     row.append( temps[channels]['name'])
                row.append('Heating Active (%)')
                row.append('Air Temp')
+               row.append('Min Temp')
+               row.append('Max Temp')
                logfile.writerow(row)
 
           while log_status == "On":
@@ -295,17 +309,22 @@ class LogThread ( threading.Thread ):
                          row.append( temps[channels]['temp'])
                     if (log_off == 0):
                          if (log_on > 1):
-                              row.append('100%') # Heater was always on
+                              row.append(100) # Heater was always on
                          else:
                               row.append('No measurements') # No measurement of heater on or off!
                     else:
                          row.append(int(100*log_on/(log_on+log_off))) # Calculate the percentage of time the heater was on
+
+                    row.append(air_temp)
+
+                    row.append(min_temperature)
+                    row.append(max_temperature)
                                     
                     log_on = 0 # Restart heater proportion measurement
                     log_off = 0
+                    min_temperature = temps[1]['temp'] # Temporary code to capture min and max
+                    max_temperature = temps[1]['temp']
 
-                    row.append(air_temp)
- 
                     logfile.writerow(row)
                time.sleep(log_interval)
           log_status = "Off"

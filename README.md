@@ -28,6 +28,9 @@ See wiki.
 
 ## Changelog
 
+### V1.4
+Added log of min and mix propagator temperature measurements
+
 ### V1.3
 Added timed temperature schedule, e.g. to allow different day/night temperature profile
 
